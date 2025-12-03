@@ -1,0 +1,30 @@
+[
+    {
+        "merged": "C:\\Users\\navee\\.gradle\\daemon\\9.2.1\\com.example.cricketwatchdog.app-debug-34:\\raw_beep.mp3.flat",
+        "source": "C:\\Users\\navee\\.gradle\\daemon\\9.2.1\\com.example.cricketwatchdog.app-main-36:\\raw\\beep.mp3"
+    },
+    {
+        "merged": "C:\\Users\\navee\\.gradle\\daemon\\9.2.1\\com.example.cricketwatchdog.app-debug-34:\\raw_cheer.mp3.flat",
+        "source": "C:\\Users\\navee\\.gradle\\daemon\\9.2.1\\com.example.cricketwatchdog.app-main-36:\\raw\\cheer.mp3"
+    },
+    {
+        "merged": "C:\\Users\\navee\\.gradle\\daemon\\9.2.1\\com.example.cricketwatchdog.app-debug-34:\\mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\navee\\.gradle\\daemon\\9.2.1\\com.example.cricketwatchdog.app-main-36:\\mipmap-xxhdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\navee\\.gradle\\daemon\\9.2.1\\com.example.cricketwatchdog.app-debug-34:\\raw_horn.mp3.flat",
+        "source": "C:\\Users\\navee\\.gradle\\daemon\\9.2.1\\com.example.cricketwatchdog.app-main-36:\\raw\\horn.mp3"
+    },
+    {
+        "merged": "com.example.cricketwatchdog.app-debug-34:/layout_activity_main.xml.flat",
+        "source": "com.example.cricketwatchdog.app-main-36:/layout/activity_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\navee\\.gradle\\daemon\\9.2.1\\com.example.cricketwatchdog.app-debug-34:\\raw_shatter.mp3.flat",
+        "source": "C:\\Users\\navee\\.gradle\\daemon\\9.2.1\\com.example.cricketwatchdog.app-main-36:\\raw\\shatter.mp3"
+    },
+    {
+        "merged": "C:\\Users\\navee\\.gradle\\daemon\\9.2.1\\com.example.cricketwatchdog.app-debug-34:\\layout_activity_main.xml.flat",
+        "source": "C:\\Users\\navee\\.gradle\\daemon\\9.2.1\\com.example.cricketwatchdog.app-main-36:\\layout\\activity_main.xml"
+    }
+]

@@ -1,0 +1,15 @@
+R_DEF: Internal format may change without notice
+local
+id apiKeyInput
+id btnResync
+id delaySeekBar
+id soundSpinner
+id startButton
+id syncSpinner
+id tvDelayValue
+layout activity_main
+mipmap ic_launcher
+raw beep
+raw cheer
+raw horn
+raw shatter
