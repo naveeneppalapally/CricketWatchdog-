@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         apiKeyInput = findViewById(R.id.apiKeyInput)
-        apiKeyInput.setText("48755340-cd62-4efb-97ab-52b04e0a4ea5")
+        apiKeyInput.setText("e7bb1b58-129f-4059-ab5f-892a08d3f875")
         syncSpinner = findViewById(R.id.syncSpinner)
         soundSpinner = findViewById(R.id.soundSpinner)
         delaySeekBar = findViewById(R.id.delaySeekBar)

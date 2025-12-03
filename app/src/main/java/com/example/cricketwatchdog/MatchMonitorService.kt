@@ -58,7 +58,9 @@ class MatchMonitorService : LifecycleService() {
         return START_STICKY
     }
 
-    private var currentMatchId: String? = null
+    private var lastRuns = -1
+    private var lastWickets = -1
+    private var isFastOcrMode = true // Default to OCR mode to save API
 
     private fun startMonitoring() {
         val notification = createNotification()
@@ -74,132 +76,72 @@ class MatchMonitorService : LifecycleService() {
 
         monitoringJob?.cancel()
         monitoringJob = lifecycleScope.launch {
-            val api = MatchAPI.create()
-            
             while (true) {
-                try {
-                    val matchData = api.getScore(apiKey)
-                    
-                    // Auto-Detect Match if not set
-                    if (currentMatchId == null) {
-                        // We need to sync first to find the match
-                        performSync(matchData.data)
-                    }
-
-                    val match = matchData.data.find { it.id == currentMatchId } ?: matchData.data.firstOrNull()
-                    
-                    if (match != null) {
-                        currentMatchId = match.id // Lock on if fallback used
-                        val score = match.score?.firstOrNull()
-                        if (score != null) {
-                            val currentBallId = "${score.o}" // Unique ID for ball
-                            
-                            if (currentBallId != lastProcessedBall) {
-                                // Real logic would be:
-                                // val event = detectEvent(oldScore, newScore)
-                                val event = EventType.NONE // Replace with real detection
-                                
-                                if (event != EventType.NONE) {
-                                    val totalDelay = if (globalDelaySeconds > 0) globalDelaySeconds else manualDelaySeconds
-                                    delay(totalDelay * 1000)
-
-                                    VolumeManager.forceAttention(this@MatchMonitorService)
-                                    VolumeManager.playEventSound(this@MatchMonitorService, event, useAiVoice)
-                                    overlayManager.showFlash(event)
-                                }
-                                
-                                lastProcessedBall = currentBallId
-                            }
-                        }
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-                delay(5000) // Poll every 5s
-            }
-        }
-
-        startSyncLoop()
-    }
-    
-    private fun startSyncLoop() {
-        syncJob?.cancel()
-        syncJob = lifecycleScope.launch {
-            while (true) {
-                // We need to fetch data to pass to sync
-                try {
-                    val api = MatchAPI.create()
-                    val matchData = api.getScore(apiKey)
-                    performSync(matchData.data)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-                delay(syncIntervalMinutes * 60 * 1000L)
+                performOcrScan()
+                delay(2000) // Fast scan every 2s
             }
         }
     }
     
-    private fun triggerManualResync() {
-        lifecycleScope.launch {
-             try {
-                val api = MatchAPI.create()
-                val matchData = api.getScore(apiKey)
-                performSync(matchData.data)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-    }
-
-    private suspend fun performSync(matches: List<MatchInfo>) {
+    private suspend fun performOcrScan() {
         if (mediaProjection == null) return
 
         val metrics = DisplayMetrics()
         val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         windowManager.defaultDisplay.getRealMetrics(metrics)
         
-        val screenOver = autoSyncEngine.getScreenOver(
+        val score = autoSyncEngine.getScreenScore(
             mediaProjection!!,
             metrics.widthPixels,
             metrics.heightPixels,
             metrics.densityDpi
         )
 
-        if (screenOver != null) {
-            // 1. Auto-Detect Match if needed
-            if (currentMatchId == null) {
-                // Find match with closest over
-                val bestMatch = matches.minByOrNull { match ->
-                    val matchOver = match.score?.firstOrNull()?.o ?: -100.0
-                    kotlin.math.abs(matchOver - screenOver)
-                }
-                
-                if (bestMatch != null) {
-                    val matchOver = bestMatch.score?.firstOrNull()?.o ?: 0.0
-                    if (kotlin.math.abs(matchOver - screenOver) < 5.0) { // Tolerance of 5 overs
-                        currentMatchId = bestMatch.id
-                    }
-                }
+        if (score != null) {
+            // First run? Initialize
+            if (lastRuns == -1) {
+                lastRuns = score.runs
+                lastWickets = score.wickets
+                return
             }
 
-            // 2. Calculate Delay for current match
-            val match = matches.find { it.id == currentMatchId }
-            if (match != null) {
-                val apiOver = match.score?.firstOrNull()?.o ?: 0.0
-                
-                // Calculate Delay
-                val apiBalls = (apiOver.toInt() * 6) + ((apiOver * 10).toInt() % 10)
-                val screenBalls = (screenOver.toInt() * 6) + ((screenOver * 10).toInt() % 10)
-                
-                val diffBalls = apiBalls - screenBalls
-                globalDelaySeconds = if (diffBalls > 0) diffBalls * 20L else 0L
+            // Detect Events
+            val diffRuns = score.runs - lastRuns
+            val diffWickets = score.wickets - lastWickets
+
+            var event = EventType.NONE
+
+            if (diffRuns == 4) {
+                event = EventType.FOUR
+            } else if (diffRuns == 6) {
+                event = EventType.SIX
             }
-        } else {
-            // Ad Detected or Failed
-             delay(30000) 
-             // We don't recurse here to avoid infinite loops in this simplified logic
+
+            if (diffWickets > 0) {
+                event = EventType.WICKET
+            }
+
+            if (event != EventType.NONE) {
+                // Trigger Alert Immediately (No Delay needed for OCR as it's live on screen)
+                VolumeManager.forceAttention(this@MatchMonitorService)
+                VolumeManager.playEventSound(this@MatchMonitorService, event, useAiVoice)
+                overlayManager.showFlash(event)
+            }
+
+            // Update state
+            lastRuns = score.runs
+            lastWickets = score.wickets
         }
     }
+
+    private fun triggerManualResync() {
+        // Reset OCR state
+        lastRuns = -1
+        lastWickets = -1
+    }
+
+    // Removed old performSync as it's replaced by performOcrScan
+    private suspend fun performSync(matches: List<MatchInfo>) {}
 
     private fun stopMonitoring() {
         monitoringJob?.cancel()
